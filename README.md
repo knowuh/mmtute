@@ -1,4 +1,7 @@
-## Middleman, S3, & Skeleton quickstart
+## Middleman, S3, skeleton, &etc. quickstart
+
+
+Serve your blog and website using S3 and Cloudfront, Amazon's fast CDN. It will be easy to maintain, and cheap to operate. It will be 'responsive' and work on mobile devices. This stack includes [Middleman](https://middlemanapp.com/) for site-building, [skeleton](http://getskeleton.com/) for responsive CSS, and [Slim](http://slim-lang.com/) and [Sass](http://sass-lang.com/) html and CSS preprocessors to keep things tidy and readable. There are lots of other good choices for these pieces, but lets start with this.
 
 ### Install Middleman
 
@@ -23,9 +26,10 @@ Pressing the browser `refresh` button is slow. When a file changes, the browser 
 
 4. Stop your currently running version of middleman, if its running by using `ctr-c` in the console where you started it.
 
-5. add LiveReload for instant (reload-free) browser updates. This will speed up development.
-  1. First install the [chrome extension](https://chrome.google.com/webstore/detail/livereload/jnihajbhpnppcggbcgedagnkighmdlei?hl=en).
-  2. Configure Middleman to use it. Do this by uncommenting lines `39-41` in `our-project/config.rb` so that it looks like this:
+
+1. Install the [chrome extension](https://chrome.google.com/webstore/detail/livereload/jnihajbhpnppcggbcgedagnkighmdlei?hl=en) for LiveReload.
+
+2. Configure Middleman to use it. Do this by uncommenting lines `39-41` in `our-project/config.rb` so that it looks like this:
 
           # Reload the browser automatically whenever files change
           configure :development do
@@ -38,7 +42,7 @@ Pressing the browser `refresh` button is slow. When a file changes, the browser 
 
 ####  Slim
 
-Middleman supports many templating languages to make maintaining web content easier. We are going to use [Slim](http://slim-lang.com/).
+Middleman supports many templating languages and preprocessors to make maintaining web content easier. We are going to use [Slim](http://slim-lang.com/).
 
 [Slim](http://slim-lang.com/) is an elegant markup that is terse and easy to read. From the projects description page:
 
@@ -72,3 +76,60 @@ Middleman supports many templating languages to make maintaining web content eas
         p class="doc"
           | you can go
           a href="/index.html" back to the index
+
+#### Use Skeleton CSS
+
+1. Download Skeleton from the [skeleton website](http://getskeleton.com/)
+
+2. Copy the CSS files into our middleman project:
+        cp ~/Downlaods/Skeleton-2.0.4/css/* ./source/stylesheets
+
+3. Copy the HTML from skeleton into our `layouts` directory
+        cp ~/Downloads/Skeleton-2.0.4/index.html ./source/layouts/layout.erb
+We can use multiple layouts, but in this case we just want to replace the default layout.
+
+4. Edit your new template file in `layout.erb`. Replace the boilerplate content with the following `<% yield %>`, around line 34-37:
+
+        <div class="container">
+          <%= yield %>
+        </div>
+
+5. Also add some dynamic page-classes to the `<body>` tag near line 30:
+        <body class="<%= page_classes %>">
+
+
+7. We should also probably rename the `stylesheets` directory to `css` and the `Javascript` directory to `js`.
+
+  1. While stile in `config.rb`, on lines 52-54:
+          set :css_dir, 'css'
+          set :js_dir, 'js'
+  2. Move them on the filesystem too:
+          mv source/stylesheets source/css
+          mv source/javascripts source/js
+
+8. We might as well get rid of `all.css` because we won't be using it.
+          rm source/css/all.css
+9. Reload [http://localhost:4567/](http://localhost:4567/).  You should see that it's using the Hobo font.
+
+10. Lets set up two column responsive post using slim. Rename `source/index.html.erb` to `source/index.html.slm` then open it in your editor, and replace the content with:
+
+          ---
+          title: Welcome to Middleman
+          ---
+
+          .six.columns
+            h2 left six column content
+            p This should collapse on smaller devices
+            .documenation
+              a href="http://middlemanapp.com" middleman docs
+              a href="http://getskeleton.com/" skeleton docs
+          .six.columns
+            h2 right six column content
+            p In full page this will be on the right side.
+            .documenation
+              a href="http://middlemanapp.com" middleman docs
+              a href="http://getskeleton.com/" skeleton docs
+
+11. One again, we changed config.rb, so we had better restart middleman. Hit `<ctr>-c` in your middleman console if its still running. then `middleman server`.
+
+12. Open your browser to [http://localhost:4567/](http://localhost:4567/) and try resizing the page. The two-column content should collapse to a single column when the window size is reduced.
