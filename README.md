@@ -1,7 +1,7 @@
 ## Middleman, S3, skeleton, &etc. quickstart
 
-
 Serve your blog and website using S3 and Cloudfront, Amazon's fast CDN. It will be easy to maintain, and cheap to operate. It will be 'responsive' and work on mobile devices. This stack includes [Middleman](https://middlemanapp.com/) for site-building, [skeleton](http://getskeleton.com/) for responsive CSS, and [Slim](http://slim-lang.com/) and [Sass](http://sass-lang.com/) html and CSS preprocessors to keep things tidy and readable. There are lots of other good choices for these pieces, but lets start with this.
+
 
 ### Install Middleman
 
@@ -20,7 +20,7 @@ The goal here is just to get you running middleman as quick as possible. We are 
 
 ### Middleman Customizations:
 
-####  LiveReload
+####  Use LiveReload
 
 Pressing the browser `refresh` button is slow. When a file changes, the browser should update instantly. We can do that with LiveReload.
 
@@ -40,7 +40,7 @@ Pressing the browser `refresh` button is slow. When a file changes, the browser 
 
 7. Make changes to `our-project/source/index.html.erb`. When you click `save` in your editor, you should notice your browser refresh immediately.
 
-####  Slim
+####  Use Slim
 
 Middleman supports many templating languages and preprocessors to make maintaining web content easier. We are going to use [Slim](http://slim-lang.com/).
 
@@ -98,20 +98,21 @@ We can use multiple layouts, but in this case we just want to replace the defaul
         <body class="<%= page_classes %>">
 
 
-7. We should also probably rename the `stylesheets` directory to `css` and the `Javascript` directory to `js`.
+7. Let's rename `stylesheets` directory to `css` and the `Javascript` directory to `js`:
+    1. While stile in `config.rb`, on lines 52-54:
 
-  1. While stile in `config.rb`, on lines 52-54:
-          set :css_dir, 'css'
-          set :js_dir, 'js'
-  2. Move them on the filesystem too:
-          mv source/stylesheets source/css
-          mv source/javascripts source/js
+            set :css_dir, 'css'
+            set :js_dir, 'js'
+    2. Move them on the filesystem too:
 
-8. We might as well get rid of `all.css` because we won't be using it.
+            mv source/stylesheets source/css
+            mv source/javascripts source/js
+8. We wont be using `all.css` so we will delete that:
+
           rm source/css/all.css
 9. Reload [http://localhost:4567/](http://localhost:4567/).  You should see that it's using the Hobo font.
 
-10. Lets set up two column responsive post using slim. Rename `source/index.html.erb` to `source/index.html.slm` then open it in your editor, and replace the content with:
+10. Let's set up two column responsive post using slim. Rename `source/index.html.erb` to `source/index.html.slm` then open it in your editor, and replace the content with:
 
           ---
           title: Welcome to Middleman
