@@ -52,12 +52,12 @@ Middleman supports many templating languages and preprocessors to make maintaini
 1. Add the following text to lines 16-17 to your `Gemfile`.
 
         # Terse markup with Slim
-        gem "install middleman-slim"
+        gem "middleman-slim"
 
 2. Install the newly added dependency: `bundle install`
 3. When we add new libraries to middleman we need to restart our server for those libraries to work. So restart middleman again: `middleman server`.
 
-5. It would help to install Slim syntax support for your browser. Here is a list:
+4. It would help to install Slim syntax support for your editor. Here is a list:
 
   * [atom editor](https://atom.io/) → [language-slim](https://atom.io/packages/language-slim) and
   [linter-slim](https://atom.io/packages/linter-slim)
@@ -66,7 +66,7 @@ Middleman supports many templating languages and preprocessors to make maintaini
   * [vim editor](www.vim.org) → [vim-slim](https://github.com/slim-template/vim-slim)
   * [emacs editor](www.gnu.org/software/emacs) → [emacs-slim](https://github.com/slim-template/emacs-slim)
 
-4. Create a new page that uses Slim. Add `secondpage.html.slim` under the `source` directory:
+5. Create a new page that uses Slim. Add `secondpage.html.slim` under the `source` directory:
 
         ---
         title: Testing Slim
@@ -77,40 +77,51 @@ Middleman supports many templating languages and preprocessors to make maintaini
           | you can go
           a href="/index.html" back to the index
 
+6. Middleman lets us mix and match markup engines, so your layout can be in ERB, and your pages can be in SLIM if you want to. Eventually you will want to convert HTML or ERB into SLIM markup. Two command line tools `html2slim` and `erbtoslim` can be installed with the [html2slim gem](https://github.com/slim-template/html2slim). We can do that from the command line:
+
+       gem install html2slim
+
+
 #### Use Skeleton CSS
 
 1. Download Skeleton from the [skeleton website](http://getskeleton.com/)
 
 2. Copy the CSS files into our middleman project:
-        cp ~/Downlaods/Skeleton-2.0.4/css/* ./source/stylesheets
 
-3. Copy the HTML from skeleton into our `layouts` directory
-        cp ~/Downloads/Skeleton-2.0.4/index.html ./source/layouts/layout.erb
-We can use multiple layouts, but in this case we just want to replace the default layout.
+        cp ~/Downlaods/Skeleton-2.0.4/css/ ./source/css
 
-4. Edit your new template file in `layout.erb`. Replace the boilerplate content with the following `<% yield %>`, around line 34-37:
+3. Remove `layouts/layout.erb` and add a new file "layouts/layout.slim"
 
-        <div class="container">
-          <%= yield %>
-        </div>
+        doctype html
+        html[lang="en"]
+          head
+            meta[charset="utf-8"]
+            title
+              | Your page title here :)
+            meta[name="description" content=""]
+            meta[name="author" content=""]
+            meta[name="viewport" content="width=device-width, initial-scale=1"]
+            link[href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css"]
+            link[rel="stylesheet" href="/css/normalize.css"]
+            link[rel="stylesheet" href="/css/skeleton.css"]
+            link[rel="icon" type="image/png" href="images/favicon.png"]
+            body class="#{page_classes}"
 
-5. Also add some dynamic page-classes to the `<body>` tag near line 30:
-        <body class="<%= page_classes %>">
+            .container
+              = yield
+
+4. delete the old Javascript and stylesheets directories:
+
+        rm -rf source/stylesheets
+        rm -rf source/javascripts 
+
+3. Change `stylesheets` directory to `css` and the `Javascript` directory to `js` in `config.rb`, on lines 52-54:
+
+        set :css_dir, 'css'
+        set :js_dir, 'js'
 
 
-7. Let's rename `stylesheets` directory to `css` and the `Javascript` directory to `js`:
-    1. While stile in `config.rb`, on lines 52-54:
-
-            set :css_dir, 'css'
-            set :js_dir, 'js'
-    2. Move them on the filesystem too:
-
-            mv source/stylesheets source/css
-            mv source/javascripts source/js
-8. We wont be using `all.css` so we will delete that:
-
-          rm source/css/all.css
-9. Reload [http://localhost:4567/](http://localhost:4567/).  You should see that it's using the Hobo font.
+9. Reload [http://localhost:4567/](http://localhost:4567/).  You should see that it's using the "Raleway" font.
 
 10. Let's set up two column responsive post using slim. Rename `source/index.html.erb` to `source/index.html.slm` then open it in your editor, and replace the content with:
 
