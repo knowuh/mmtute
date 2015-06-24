@@ -1,0 +1,13 @@
+
+.font-test {
+  font-size: 40px;
+  .walkway {
+    font-family: walkway;
+    .bold {
+      font-weight: bold;
+    }
+    .italic {
+      font-style: italic;
+    }
+  }
+}

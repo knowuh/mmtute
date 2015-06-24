@@ -36,7 +36,7 @@ Pressing the browser `refresh` button is slow. When a file changes, the browser 
             activate :livereload
           end
 
-6. Start your sever again `middleman server` and open http://localhost:4567/
+6. Start your sever again `middleman server` and open [http://localhost:4567/](http://localhost:4567/)
 
 7. Make changes to `our-project/source/index.html.erb`. When you click `save` in your editor, you should notice your browser refresh immediately.
 
@@ -113,7 +113,7 @@ Middleman supports many templating languages and preprocessors to make maintaini
 4. delete the old Javascript and stylesheets directories:
 
         rm -rf source/stylesheets
-        rm -rf source/javascripts 
+        rm -rf source/javascripts
 
 3. Change `stylesheets` directory to `css` and the `Javascript` directory to `js` in `config.rb`, on lines 52-54:
 
@@ -145,3 +145,132 @@ Middleman supports many templating languages and preprocessors to make maintaini
 11. One again, we changed config.rb, so we had better restart middleman. Hit `<ctr>-c` in your middleman console if its still running. then `middleman server`.
 
 12. Open your browser to [http://localhost:4567/](http://localhost:4567/) and try resizing the page. The two-column content should collapse to a single column when the window size is reduced.
+
+#### Adding custom Fonts to your CSS.
+
+You may want to purchase and use custom fonts on your site. Even if you aren't, you should follow along, because this section also talks about adding your own CSS files. Here we use a freeware font downloaded from [Font Squirell](http://www.fontsquirrel.com/fonts/Walkway)
+
+Middleman uses [sprokets](https://github.com/sstephenson/sprockets) to combine, and minimize our CSS and JS files. This current best practice of combining and minimizing will become an anti-pattern when [http2](https://http2.github.io/) is adopted, but in the meantime we need to keep minifying and combining our assets.  
+
+We are going to add new  CSS files to our project. These CSS files will be automatically combined into one file called `css/all.css`. The process is easy.
+
+1. Create a new CSS file called `css/all.css`. Using special comments, this CSS file will tell middleman to *require* our other CSS files. `css/all.css` should look like this:
+
+        /*
+         *= require normalize
+         *= require skeleton
+         *= require fonts
+         *= require our
+         */
+
+2. `css/normalize.css` and `css/skeleton.css` already exist, but we need to make two new files. `css/our.scss` will be where we add custom CSS to override the behavior skeleton and define new styles. `css/fonts.scss` is where we will put our fonts. We could define fonts in any CSS file, but I like keeping the CSS files small and modular. BTW: `.scss` file extensions are for [Sass](http://sass-lang.com/) files. Middleman converts Sass into CSS files for us the same way it converts slim to html. Here is what we put in `css/fonts.scss`:
+
+        /*
+        Font face "walkway"  (Freeware License v1.00)
+        Downloaded from "Font Squirell" http://www.fontsquirrel.com/fonts/Walkway
+        Designed by GemFonts
+
+        Formats:
+        TTF - Works in most browsers except IE and iPhone.
+        EOT - IE only.
+        WOFF - Compressed, emerging standard.
+        SVG - iPhone/iPad. */
+
+        @font-face {
+            font-family: 'walkway';
+            src: url('../fonts/Walkway_SemiBold-webfont.eot');
+            src: url('../fonts/Walkway_SemiBold-webfont.eot?#iefix') format('embedded-opentype'),
+                 url('../fonts/Walkway_SemiBold-webfont.woff') format('woff'),
+                 url('../fonts/Walkway_SemiBold-webfont.ttf') format('truetype'),
+                 url('../fonts/Walkway_SemiBold-webfont.svg#walkway_ultraboldregular') format('svg');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'walkway';
+            src: url('../fonts/Walkway_Black-webfont.eot');
+            src: url('../fonts/Walkway_Black-webfont.eot?#iefix') format('embedded-opentype'),
+                 url('../fonts/Walkway_Black-webfont.woff') format('woff'),
+                 url('../fonts/Walkway_Black-webfont.ttf') format('truetype'),
+                 url('../fonts/Walkway_Black-webfont.svg#walkway_blackregular') format('svg');
+            font-weight: bold;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'walkway';
+            src: url('../fonts/Walkway_Oblique-webfont.eot');
+            src: url('../fonts/Walkway_Oblique-webfont.eot?#iefix') format('embedded-opentype'),
+                 url('../fonts/Walkway_Oblique-webfont.woff') format('woff'),
+                 url('../fonts/Walkway_Oblique-webfont.ttf') format('truetype'),
+                 url('../fonts/Walkway_Oblique-webfont.svg#walkway_obliqueregular') format('svg');
+            font-weight: normal;
+            font-style: italic;
+
+        }
+The above section defines three variants on 'walkway' (normal/normal, bold/normal, normal/italic). It also specifies fall-back formats (other than woff) for old browsers. In the next file you will see how these fonts are used in our CSS. This is what to put in `css/our.scss`:
+
+        .font-test {
+          font-size: 40px;
+          .walkway {
+            font-family: walkway;
+            .bold {
+              font-weight: bold;
+            }
+            .italic {
+              font-style: italic;
+            }
+          }
+        }
+3. We now want to change the reference to our stylesheets in our layout. Instead of including both `css/normalize.css` and `css/skeletin` now we *only* include `css/all.css` in `layouts/layout.slim` file:
+
+        doctype html
+        html lang="en"
+          head
+            meta charset="utf-8"
+            title = current_page.data.title or "Our stie"
+            meta name="description" content=""
+            meta name="author" content=""
+            meta name="viewport" content="width=device-width, initial-scale=1"
+            link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css"
+            link rel="stylesheet" href="/css/all.css"
+            link rel="icon" type="image/png" href="images/favicon.png"
+            body class="#{page_classes}"
+              .container
+                .meta
+                  h1 = current_page.data.title
+                .article
+                  = yield
+4. **I almost forgot!** We need to put our downloaded font files (*.tff, *.woff, *.eot, *.svg) into a new folder `source/fonts`. Find your downloaded files, and put them in. *make sure the paths in the `src` attribute of `css/fonts.scss` match up.* They should if you have been following along with my example.
+
+4. Finally we need to create a new page to test our freshly added fonts. Create `source/font-test.html.slim`:
+
+        .font-test
+          .walkway
+            p WalkWay regular.
+            p.italic WalkWay italic?
+            p.bold WalkWay bold!
+You can now see your new fonts at the sample page: [http://localhost:4567/font-test.html](http://localhost:4567/font-test.html)
+
+#### Build the site !
+
+So far we have only been using `middleman server` to preview our changes. When we put our static pages up on a server, we aren't going to need to run anything.  We generate the files before hand. Let's try that now before we get any farther.
+
+1. stop middleman by using `ctr-c` in the console.
+2. run `middleman build --clean`
+3. if everything goes right, you should see a new directory called `build`. Take a look around in there and see the static files that were created for us.
+4. You can now run a web server inside that directory (using python on port 8000).
+
+        cd build && python -c 'import SimpleHTTPServer; SimpleHTTPServer.test()'
+5. Open [http://localhost:8000/font-test.html](http://localhost:8000/font-test.html) in your browser.
+
+
+####  Side note: What we have right now.
+
+We have middleman installed with our favorite template engine (slim) and skeleton. Before we go any further, what can we do with the setup we have?
+
+  * We can add slim files to `source/*.slim` to make new pages available at `http://localhost://*.html`
+  * We can add new CSS files to our `css/all.css` to add new module styles.
+  * We can change the layout by editing `layouts/layout.slim`
+
