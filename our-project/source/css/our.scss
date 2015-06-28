@@ -1,6 +1,12 @@
-
 body {
   font-family: walkway;
+}
+.header{
+  background-color: hsla(128,0,20,1.0);
+  color: hsla(128,0,255,1.0);
+  padding: 0.2rem;
+  h1, h2, h3, h4 { margin: 0.5rem; }
+  margin-bottom: 1rem;
 }
 .font-test {
   font-size: 40px;
