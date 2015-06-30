@@ -373,13 +373,12 @@ and color adjustment. (see if you can spot it).
 
 
       .container {
-        margin-top: $nav-height;
+        margin-top: $nav-height * 2;
       }
 
       /* Hide the burger, and switch to links across top for larger screens */
       @media (min-width: 700px) {
         nav {
-          background-color: lightness($nav-background);
           .links {
             display: inline-block;
           }
