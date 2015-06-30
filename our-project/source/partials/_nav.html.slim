@@ -1,0 +1,41 @@
+- @links = [\
+  {name: "google", url: "http://google.com/"}, \
+  {name: "home", url: "/"}, \
+  {name: "blog", url: "/"}, \
+] + (current_page.data.links || [])
+- @title = current_page.data.title || "Our Site"
+nav
+  .title = @title
+  .right
+    .links
+      - @links.each do |link|
+          a href=link[:url] #{link[:name]}
+
+    #hamburger
+      a href="#" [=]
+      #menu.hidden
+        - @links.each do |link|
+            a href="#{link[:url]}" #{link[:name]}
+
+coffee:
+  $(document).on 'ready', ->
+    hamburger = $("#hamburger")
+    menu = $("#menu")
+
+    isChild = (elm,selector) ->
+      $(elm).parent(selector).length > 0
+
+    hideMenu = (e) ->
+      unless e and isChild(e.target,"#menu")
+        hamburger.bind "click", showMenu
+        $('body').unbind "click", hideMenu
+        menu.addClass  "hidden"
+
+    showMenu = (e) ->
+      e.stopPropagation()
+      hamburger.unbind "click", showMenu
+      $('body').bind "click", hideMenu
+      menu.removeClass "hidden"
+      setTimeout hideMenu, 4000
+
+    hideMenu()
