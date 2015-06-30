@@ -274,3 +274,208 @@ We have middleman installed with our favorite template engine (slim) and skeleto
   * We can add new CSS files to our `css/all.css` to add new module styles.
   * We can change the layout by editing `layouts/layout.slim`
 
+
+## Responsive Navigation Menu
+
+This is a big change. You can view the commit here: [55aa1300](https://github.com/knowuh/mmtute/commit/55aa1300b647af35661a17a2a43d6cb4c059823e)
+
+Basically, we added:
+
+* A new stylesheet `navigation.scss`, and a new reference to it in `all.css`
+* New javascript (in the form of coffeescript in a view partial) for the dropdown hamburger menu.
+* Meta-data to `index.html.slim` for the navigation links (internal to index)
+* Small changes to `layout.slim` to add jquery, and insert the navigation menu partial.
+
+#### Add `navigation` to `our-project/source/css/all.css`
+
+      /*
+      *= require normalize
+      *= require skeleton
+      *= require fonts.css
+      *= require navigation
+      *= require our.css
+      */
+
+
+#### New file: `our-project/source/css/navigation.scss`:
+
+This is the bulk of the change actually. This stylesheet has
+a media query which tells us whether to display a hamburger or
+just list the links across the top of the page.  Here we also introduce
+some SASS magic, namely variables for sizes and colors. There is also some math
+and color adjustment. (see if you can spot it).
+
+      $nav-height: 4rem;
+      $nav-background: hsla(128, 0, 0, 1.0);
+      $link-color: hsla(128, 0, 40, 1.0);
+
+      nav {
+        div {
+          margin-left: 1rem;
+          margin-right: 1rem;
+        }
+        a {
+          margin-left: 2rem;
+          color: $link-color;
+          text-decoration: none;
+          transition: 1.8s;
+        }
+        a:hover{
+          color: lighten($link-color, 50%);
+          transition: 0.1s;
+        }
+        width: 100%;
+        position:fixed;
+        top: 0;
+        height: $nav-height;
+        z-index: 3;
+        font-size: $nav-height * 0.75;
+        background-color: $nav-background;
+        padding: 1rem;
+        .title {
+          font-weight: bold;
+          color: lighten($link-color, 100%);
+          display: inline-block;
+        }
+        .right {
+          position: absolute;
+          right: 0px;
+          padding-right: 2rem;
+          display: inline-block;
+        }
+        .links {
+          font-size: $nav-height * 0.5;
+          display: none;
+        }
+        #hamburger {
+          display: inline-block;
+          #menu {
+            position: fixed;
+            top: 0px;
+            right: 0px;
+            margin: 0px;
+            padding: 1rem;
+            background-color: $nav-background;
+            overflow: hidden;
+            z-index: 2;
+            transition: 0.2s;
+            display: inline-block;
+            &.hidden {
+              top: -400px;
+              transition: 2s;
+            }
+            a {
+              display: block;
+            }
+          }
+        }
+      }
+
+
+      .container {
+        margin-top: $nav-height;
+      }
+
+      /* Hide the burger, and switch to links across top for larger screens */
+      @media (min-width: 700px) {
+        nav {
+          background-color: lightness($nav-background);
+          .links {
+            display: inline-block;
+          }
+          #hamburger {
+            display: none;
+          }
+        }
+      }
+
+
+
+#### Changes to `our-project/source/index.html.slim`:
+
+1. add links meta-data to the top. (These are internal links to the h2's)
+We are adding a new value to `current_page.data` called `links`. Links is an
+array of objects with `name` and `url` properties. These values get used by
+`source/partials/_nav.html.slim`
+
+        ---
+        title: a twelve column row.
+        links:
+            - name: One
+              url: "#one"
+            - name: Two
+              url: "#two"
+            - name: Three
+              url: "#three"
+        ---
+
+2. Add id's to the `<h2>` tags on our page, for internal document links. For example
+on the first `<h2>` element, we add the id `one`. Which we link to as `#one` in the
+navigation menu.
+
+          h2#one 1 Some exciting headline.
+
+3. add splashes of ipsum text to make our paragraphs longer, so that we can see
+that the navigation is fixed to the top of the page when content scrolls.
+
+    p  Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore
+
+
+
+
+Add jquery and a nav partial in: `our-project/source/layouts/layout.slim`  (**remove stars when pasting**)
+
+       meta name="viewport" content="width=device-width, initial-scale=1"
+       link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css"
+       link rel="stylesheet" href="/css/all.css"
+       script src="//code.jquery.com/jquery-1.11.3.min.js"  ★★
+       link rel="icon" type="image/png" href="images/favicon.png"
+       body class="#{page_classes}"
+        = partial "partials/nav" ★★
+
+
+Add a new file in a new directory (`source/partials`) for the navigation.
+This file includes inline ruby (preceeded by `-` in slim), and inline coffeescript
+preceeded by the `cofffee:` marker. in `our-project/source/partials/_nav.html.slim`:
+
+      - @links = [\
+        {name: "google", url: "http://google.com/"}, \
+        {name: "home", url: "/"}, \
+        {name: "blog", url: "/"}, \
+      ] + (current_page.data.links || [])
+      - @title = current_page.data.title || "Our Site"
+      nav
+        .title = @title
+        .right
+          .links
+            - @links.each do |link|
+                a href=link[:url] #{link[:name]}
+
+          #hamburger
+            a href="#" [=]
+            #menu.hidden
+              - @links.each do |link|
+                  a href="#{link[:url]}" #{link[:name]}
+
+      coffee:
+        $(document).on 'ready', ->
+          hamburger = $("#hamburger")
+          menu = $("#menu")
+
+          isChild = (elm,selector) ->
+            $(elm).parent(selector).length > 0
+
+          hideMenu = (e) ->
+            unless e and isChild(e.target,"#menu")
+              hamburger.bind "click", showMenu
+              $('body').unbind "click", hideMenu
+              menu.addClass  "hidden"
+
+          showMenu = (e) ->
+            e.stopPropagation()
+            hamburger.unbind "click", showMenu
+            $('body').bind "click", hideMenu
+            menu.removeClass "hidden"
+            setTimeout hideMenu, 4000
+
+          hideMenu()
