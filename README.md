@@ -478,3 +478,171 @@ preceeded by the `cofffee:` marker. in `our-project/source/partials/_nav.html.sl
             setTimeout hideMenu, 4000
 
           hideMenu()
+
+
+
+### S3 Website publishing using the s3_website gem.
+
+Prerequisites:  You need to signup for an AWS account if you don't have one already.
+
+We are going to setup S3 website publishing using a ruby gem called "[s3_website](https://github.com/laurilehmijoki/s3_website)".  First we will create a  virtual authorized AWS user, and give that user the correct permissions to manage our s3 bins. Next we will add the `s3_website` gem to our `Gemfile`, and install it.  Then we will configure the s3_webiste gem to work with our middleman setup.  Finally we will push our changes to amazon.
+
+We wont be doing DNS tweaking in this episode. We will be testing using the default AWS domain names.
+
+In these examples, wherever you see "yourdomain.com" you should use your own (eventual) domain name.
+
+As part of this process we store confidential information in a file called '.env'.  This file shouldn't be shared, stored on a public server, or checked into version control. (eg: git)
+
+1. Log into the  [AWS IAM console](https://console.aws.amazon.com/iam)
+Create a new user by clicking on the "users" link.  This new user will only have limited capabilities (to write to your S3 bucket).
+![aws console first step](images/iam-console-01.png)
+![aws console second step](images/iam-console-02.png)
+
+2. Give the user a name matching your domain name so that you don't forget what it is for.
+
+3. After creating the user, you will be shown some access tokens on the screen. Copy the  tokens into a new file called `our_project/.env` using the following format. Don't share this file.
+
+        S3_ID=XXXXXXX
+        S3_SECRET=XXXXXXXX
+
+4. Close the window which displays the use credentials, and click on the newly added user in the users listing
+![aws console third step](images/iam-console-03.png)
+
+5. Now add a new 'inline policy" for the user.
+![create policy, first step](images/create-poli cy-01.png)
+![create policy, second step](images/create-policy-02.png)
+
+6. Copy this text into the policy file:
+
+        {
+            "Statement": [
+                {
+                    "Action": [
+                        "cloudfront:*"
+                    ],
+                    "Effect": "Allow",
+                    "Resource": [
+                        "*"
+                    ]
+                },
+                {
+                    "Action": [
+                        "s3:*"
+                    ],
+                    "Effect": "Allow",
+                    "Resource": [
+                        "arn:aws:s3:::yourdomain.com",
+                        "arn:aws:s3:::yourdomain.com/*"
+                    ]
+                }
+            ]
+        }
+__DONT USE yourdomain.com__ -- Use whatever domain name you will be using.
+
+7. Add the s3_website gem `oursite/Gemfile`
+
+        # Deployment to S3
+        gem "s3_website"
+
+8. Install the newly added gem by running:
+
+        bundle install
+
+9. Use the `s3_website` tool to create a configuration file:
+
+        s3_website cfg create
+
+10. Edit the file we just created in `oursite/s3_website.yml` The top of the file should look like this. (the sensitive authentication tokens are being read in from the `.env` file.)  You will just change the s3_bucket name to the whatever your bucket name is.
+
+        s3_id: <%= ENV['S3_ID'] %>
+        s3_secret: <%= ENV['S3_SECRET'] %>
+        s3_bucket: yourdomain.com
+        max_age:
+          "*": 300
+          "fonts/*": 6000
+        gzip: true
+        cloudfront_invalidate_root: true
+
+11. Saved `oursite/s3_website.yml` and run:
+
+        s3_website cfg apply
+You will be asked if you want to use Amazons cloudfront CDN. Answer yes. You will see something about `please allow 15 minutes....`. This message is letting us know that couldfront is starting for us, and wont be ready for some time, but we can continue anyway.  
+
+12. Build your project, and push it up using these two commands:
+
+        middleman build
+        s3_website push
+When `s3_website push` is finished, it will print out the current URL for the S3 website. It should be something like http://yourdomain.com.s3-website-us-east-1.amazonaws.com __THIS SITE WILL BE SLOW, because its not being served from the CDN. Don't panic.__ It will be much faster when the CDN is ready.
+
+13. After 15 minutes or so, you should be able to check cloudfront.  You will see your distribution listed here:  https://console.aws.amazon.com/cloudfront where you can monitor its progress. By clicking on the newly created distribution name, you can find the DNS entry for your CDN, eg: dbluxxxxxud3.cloudfront.net
+![cloud front, first step](images/cloudfront-01.png)
+![cloud front, second step](images/cloudfront-02.png)
+It really does take about 5-10 minutes the first time. Keep refreshing the console page. Or just try continually reloading URL in a browser. The couldfront distribution ID has been added automatically to the s3_website.yml configuration file (incase you see multiple in your console).
+
+14. DNS: You can use any method you want to redirect your domain name to that CDN server, including using a CNAME from your DNS provider, but in a future installment I will cover a performant way to do it using AWS DNS servers.
+
+15. Future builds and workflow: Subsequent builds will go much faster.  It will just be a matter of running
+
+        middleman build && s3_website push
+
+
+
+### Speeding up our cloudfront website:
+
+[google page speed](https://developers.google.com/speed/pagespeed/insights/) identified a number of slowdowns on our site.  The basic recommendations it made were:
+
+* Concatenate and minify javascript & css files
+* Load scripts asynchronously if possible.
+* Use correct cache headers.
+
+This resulted in:
+
+* Modifying middleman's build configuration in config.rb  to concatenate and minify assets.
+* Adjusting s3_website.yml for better cache settings, and compressed files.
+* Changing layout.slim to load jquery asynchronously.
+* Changing the coffeescript in _nav.html.slim so that it doesn't load until after jquery has loaded.
+
+In _nav.html.slim:
+
+        coffee:
+          enable_menu = ->
+            hamburger = $("#hamburger")
+            menu = $("#menu")
+
+            isChild = (elm,selector) ->
+              $(elm).parent(selector).length > 0
+
+            hideMenu = (e) ->
+              unless e and isChild(e.target,"#menu")
+                hamburger.bind "click", showMenu
+                $('body').unbind "click", hideMenu
+                menu.addClass  "hidden"
+
+            showMenu = (e) ->
+              e.stopPropagation()
+              hamburger.unbind "click", showMenu
+              $('body').bind "click", hideMenu
+              menu.removeClass "hidden"
+              setTimeout hideMenu, 4000
+
+            hideMenu()
+            window.addEventListener('load', enable_menu, false)
+
+In `layout.slim`, find the jquery line, and change it to
+load asynchronously like this:
+
+          script src="//code.jquery.com/jquery-1.11.3.min.js" async="async"
+
+In `config.rb`, find the `build` section and change it like so:
+
+        configure :build do
+          # For example, change the Compass output style for deployment
+          activate :minify_css
+
+          # Minify Javascript on build
+          activate :minify_javascript
+        end
+
+Once those changes are made, we want to force an update to all files, including files that haven't changed. We push all files, so that the cache settings can be pushed up. To do this we run:
+
+        middleman build && s3_website push --force

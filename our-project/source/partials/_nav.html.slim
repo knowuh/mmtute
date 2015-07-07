@@ -18,7 +18,7 @@ nav
             a href="#{link[:url]}" #{link[:name]}
 
 coffee:
-  $(document).on 'ready', ->
+  enable_menu = ->
     hamburger = $("#hamburger")
     menu = $("#menu")
 
@@ -39,3 +39,4 @@ coffee:
       setTimeout hideMenu, 4000
 
     hideMenu()
+  window.addEventListener('load', enable_menu, false)
